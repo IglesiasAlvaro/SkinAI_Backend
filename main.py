@@ -24,6 +24,7 @@ app.add_middleware(
         "http://localhost:3000",
         "http://127.0.0.1:3000",
         "null",
+        "https://iglesiasalvaro.github.io"
     ],
     allow_credentials=False,
     allow_methods=["*"],
