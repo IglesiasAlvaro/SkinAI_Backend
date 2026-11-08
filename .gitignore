@@ -1,0 +1,14 @@
+# Entornos virtuales
+.venv/
+venv/
+
+# Python
+__pycache__/
+*.py[cod]
+
+# Claves y configuración local (NO subir)
+.env
+
+# Editores
+.vscode/
+.idea/

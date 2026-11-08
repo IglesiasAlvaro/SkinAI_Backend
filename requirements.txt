@@ -1,6 +1,10 @@
-fastapi>=0.100.0
-uvicorn>=0.22.0
-pillow>=9.5.0
-numpy>=1.23.5
-tensorflow>=2.12.0
-python-multipart>=0.0.6
+fastapi==0.162.2
+uvicorn==0.54.0
+pydantic==2.14.3
+python-multipart==0.0.33
+pillow==13.0.0
+numpy==2.5.4
+tensorflow==2.21.0
+google-genai==3.0.0
+supabase==2.34.1
+python-dotenv==1.2.4

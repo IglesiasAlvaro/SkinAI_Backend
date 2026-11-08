@@ -1,4 +1,4 @@
-﻿import io
+import io
 import json
 import os
 from fastapi import FastAPI, File, UploadFile, HTTPException, status
@@ -8,6 +8,8 @@ import numpy as np
 import tensorflow as tf
 from pathlib import Path
 from fastapi.middleware.cors import CORSMiddleware
+
+from chat_router import router as chat_router  # <-- NUEVO: chatbot RAG
 
 
 app = FastAPI(
@@ -24,12 +26,14 @@ app.add_middleware(
         "http://localhost:3000",
         "http://127.0.0.1:3000",
         "null",
-        "https://iglesiasalvaro.github.io"
+        "https://iglesiasalvaro.github.io",
     ],
     allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+app.include_router(chat_router)  # <-- NUEVO: habilita POST /chat
 
 # Rutas de configuración
 BASE_DIR = Path(__file__).parent
