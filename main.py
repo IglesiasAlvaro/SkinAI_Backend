@@ -1,15 +1,14 @@
+﻿import gc
 import io
 import json
 import os
 from fastapi import FastAPI, File, UploadFile, HTTPException, status
-from fastapi.responses import JSONResponse
 from PIL import Image
 import numpy as np
 import tensorflow as tf
 from pathlib import Path
 from fastapi.middleware.cors import CORSMiddleware
 
-from chat_router import router as chat_router  # <-- NUEVO: chatbot RAG
 
 
 app = FastAPI(
@@ -33,12 +32,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(chat_router)  # <-- NUEVO: habilita POST /chat
-
 # Rutas de configuración
 BASE_DIR = Path(__file__).parent
-MODEL_PATH = 'efficientnetb0_skinai_v2_finetuned.keras'
-MAPPING_PATH = 'label_mapping.json'
+MODEL_PATH = str(BASE_DIR / 'efficientnetb0_skinai_v2_finetuned.keras')
+MAPPING_PATH = str(BASE_DIR / 'label_mapping.json')
 MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024  # Limitación estricta de 10 MB
 
 # Variables globales de la APP
@@ -105,6 +102,7 @@ async def predict(file: UploadFile = File(...)):
     # 2. Intentar parsear y validar la estructura de la imagen
     try:
         image = Image.open(io.BytesIO(contents))
+        image.thumbnail((1024, 1024))  # reduce memoria con fotos grandes
         # Convertimos forzosamente a RGB para evitar problemas con canales alfa (PNG) o escala de grises
         image = image.convert("RGB")
     except Exception:
@@ -126,7 +124,7 @@ async def predict(file: UploadFile = File(...)):
 
     # 4. Inferencia con el modelo cargado
     try:
-        predictions = model.predict(img_array, verbose=0)[0] # Obtenemos el vector de probabilidades
+        predictions = model(img_array, training=False).numpy()[0] # Vector de probabilidades (más liviano que predict)
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -136,6 +134,10 @@ async def predict(file: UploadFile = File(...)):
     # 5. Estructurar y ordenar los resultados de mayor a menor
     scores = {classes_order[i]: float(predictions[i]) for i in range(len(classes_order))}
     sorted_scores = dict(sorted(scores.items(), key=lambda item: item[1], reverse=True))
+
+    # Liberar memoria (plan gratuito de 512 MB)
+    del contents, image, image_resized, img_array, predictions
+    gc.collect()
 
     return {
         "success": True,
